@@ -6,6 +6,7 @@ import cats.data.NonEmptyList
 import com.softwaremill.bootzooka.email.EmailModule
 import com.softwaremill.bootzooka.http.{Http, HttpApi}
 import com.softwaremill.bootzooka.infrastructure.InfrastructureModule
+import com.softwaremill.bootzooka.media.MediaModule
 import com.softwaremill.bootzooka.metrics.MetricsModule
 import com.softwaremill.bootzooka.passwordreset.PasswordResetModule
 import com.softwaremill.bootzooka.security.SecurityModule
@@ -22,14 +23,19 @@ trait MainModule
     with UserModule
     with PasswordResetModule
     with MetricsModule
-    with InfrastructureModule {
+    with InfrastructureModule
+    with MediaModule {
 
   override lazy val idGenerator: IdGenerator = DefaultIdGenerator
   override lazy val clock: Clock = Clock.systemUTC()
 
   lazy val http: Http = new Http()
 
-  private lazy val endpoints: ServerEndpoints = userApi.endpoints concatNel passwordResetApi.endpoints
+  private lazy val endpoints: ServerEndpoints =
+    userApi.endpoints concatNel
+    passwordResetApi.endpoints concatNel
+      mediaApi.endpoints
+
   private lazy val adminEndpoints: ServerEndpoints = NonEmptyList.of(metricsApi.metricsEndpoint, versionApi.versionEndpoint)
 
   lazy val httpApi: HttpApi = new HttpApi(http, endpoints, adminEndpoints, collectorRegistry, config.api)

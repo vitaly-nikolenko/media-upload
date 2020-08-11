@@ -6,6 +6,7 @@ import com.softwaremill.bootzooka.metrics.Metrics
 import com.typesafe.scalalogging.StrictLogging
 import doobie.util.transactor
 import monix.eval.Task
+import monix.execution.Scheduler
 import monix.execution.Scheduler.Implicits.global
 import sttp.client.SttpBackend
 
@@ -24,6 +25,7 @@ object Main extends StrictLogging {
           override def xa: transactor.Transactor[Task] = _xa
           override def baseSttpBackend: SttpBackend[Task, Nothing, Nothing] = _baseSttpBackend
           override def config: Config = initModule.config
+          override def blockingIO: Scheduler = monix.execution.Scheduler.io("media-block")
         }
 
         /*
