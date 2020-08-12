@@ -34,7 +34,7 @@ object Main extends StrictLogging {
         - the second allocates the http api resource, and never releases it (so that the http server is available
           as long as our application runs)
          */
-        modules.startBackgroundProcesses >> modules.httpApi.resource.use(_ => Task.never)
+        modules.httpApi.resource.use(_ => Task.never)
       }
     }
     mainTask.runSyncUnsafe()

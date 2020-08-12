@@ -54,33 +54,7 @@ class DB(_config: DBConfig) extends StrictLogging {
         connectEC,
         Blocker.liftExecutionContext(transactEC)
       )
-      _ <- Resource.liftF(connectAndMigrate(xa))
     } yield xa
   }
 
-  private def connectAndMigrate(xa: Transactor[Task]): Task[Unit] = {
-    (migrate() >> testConnection(xa) >> Task(logger.info("Database migration & connection test complete"))).onErrorRecoverWith {
-      case e: Exception =>
-        logger.warn("Database not available, waiting 5 seconds to retry...", e)
-        Task.sleep(5.seconds) >> connectAndMigrate(xa)
-    }
-  }
-
-  private val flyway = {
-    Flyway
-      .configure()
-      .dataSource(config.url, config.username, config.password.value)
-      .load()
-  }
-
-  private def migrate(): Task[Unit] = {
-    if (config.migrateOnStart) {
-      Task(flyway.migrate()).void
-    } else Task.unit
-  }
-
-  private def testConnection(xa: Transactor[Task]): Task[Unit] =
-    Task {
-      sql"select 1".query[Int].unique.transact(xa)
-    }.void
 }
